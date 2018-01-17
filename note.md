@@ -1,0 +1,35 @@
+site.posts中的每一个：
+    data      指的就是索引，site.posts.data: [1,2,3...]
+    length
+    _model
+    _schema
+    count
+    size
+    forEach
+    each
+    toArray
+    eq
+    first
+    last
+    slice
+    limit
+    skip
+    reverse
+    shuffle
+    random
+    find
+    findOne
+    sort
+    map
+    reduce
+    reduceRight
+    filter
+    every
+    some
+    update
+    replace
+    remove
+    populate
+
+------------------------
+site.posts.each中的每一个：
