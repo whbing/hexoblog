@@ -13,11 +13,14 @@ tags:
 {% blockquote %}
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque hendrerit lacus ut purus iaculis feugiat. Sed nec tempor elit, quis aliquam neque. Curabitur sed diam eget dolor fermentum semper at eu lorem.
 {% endblockquote %}
-{% codeblock lang:java %}
-[rectangle set
-X: 10 y: 10
-width: 20
-height: 20];
-{% endcodeblock %}
+```java
+public static void main{
+    public static static i static i iiiii eee ee rrr ttt yy static(int aaa){
+        int a =1;
+        String s = "ss";
+    }
+}
+```
+
 <!-- more -->
 5555

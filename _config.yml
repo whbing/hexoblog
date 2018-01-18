@@ -41,7 +41,7 @@ post_asset_folder: true #生成对应文章的文件夹放资源文件
 relative_link: false
 future: true
 highlight:
-  enable: true
+  enable: false
   line_number: true
   auto_detect: false
   tab_replace:
