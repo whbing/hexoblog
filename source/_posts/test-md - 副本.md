@@ -1,6 +1,6 @@
 ---
-title: 标题2
-date: 2018-01-08 15:21:26
+title: 题目1
+date: 2018-02-08 15:21:26
 updated: 2019-01-12 15:21:26
 categories: 爬虫
 tags:
@@ -24,21 +24,3 @@ public static void main{
 
 <!-- more -->
 5555
-
-<ul class="<%- className %>-list">
-            <%
-            var this_month = data[i].month_data;
-            for (j = 0, len2 = data[i].month_data.length;j < len2; j++) {
-            %>
-                <li >
-                <%- this_month[j].m %>月
-                <%
-                for (k = 0, len3 = this_month[j].post_list.length;k < len3; k++) {
-                %>
-                  <a class="<%- className %>-list-link">
-                    <%- this_month[j].post_list[k].title %>
-                  </a>
-                <%- } %>
-            </li >
-            <% } %>
-       </ul>
