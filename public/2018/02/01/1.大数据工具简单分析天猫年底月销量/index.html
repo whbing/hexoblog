@@ -1,0 +1,2282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 这一部分是所有页面都要加载的 -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    
+
+    <title>
+      spark简单分析天猫年底月销量
+    </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    
+      <meta name="author" content="whbing">
+    
+    
+
+    <meta name="description" content="1.引言在线上交易早已成熟的今天，电商交易量究竟有多少？为了清晰地比较天猫月销量，本文爬取了天猫2017年底、2018年初主流分类商品大量数据，并做了简单的数据统计。整体流程如下：  说明：利用scrapy爬取天猫店铺数据约50万条，导入HDFS分布式存储，利用大数据组件spark操作算子分析及sparkSQL查询分析得出处理结果，最后，EChart前端组件将结果以图表形式展现出来。 2.分析过程">
+<meta name="keywords" content="scrapy,spark">
+<meta property="og:type" content="article">
+<meta property="og:title" content="spark简单分析天猫年底月销量">
+<meta property="og:url" content="https://www.whbing.cn/2018/02/01/1.大数据工具简单分析天猫年底月销量/index.html">
+<meta property="og:site_name" content="whbing">
+<meta property="og:description" content="在线上交易早已成熟的今天，电商月交易量有多少？为了清晰地比较天猫月销量，本文爬取了天猫2017年底、2018年初主流分类商品大量数据，并做了简单的数据统计。整体流程如下：  说明：利用scrapy爬取天猫店铺数据约50万条，导入HDFS分布式存储，利用大数据组件spark操作算子分析及sparkSQL查询分析得出处理结果，最后，EChart前端组件将结果以图表形式展现出来。 2.分析过程">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://www.whbing.cn/images/tmall/out.png">
+<meta property="og:updated_time" content="2018-02-01T07:21:26.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="spark简单分析天猫年底月销量">
+<meta name="twitter:description" content="在线上交易早已成熟的今天，电商交易量究竟有多少？为了清晰地比较天猫月销量，本文爬取了天猫2017年底、2018年初主流分类商品大量数据，并做了简单的数据统计。整体流程如下：  说明：利用scrapy爬取天猫店铺数据约50万条，导入HDFS分布式存储，利用大数据组件spark操作算子分析及sparkSQL查询分析得出处理结果，最后，EChart前端组件将结果以图表形式展现出来。 2.分析过程">
+<meta name="twitter:image" content="http://www.whbing.github.io/images/tmall/out.png">
+    
+    
+    
+      <link rel="icon" type="image/x-icon" href="/favicon.png">
+    
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css"><!--仅仅是为了打印的时候有爱心图标-->
+
+    <link rel="stylesheet" href="/css/animate.css">
+    <link rel="stylesheet" href="/css/uno.css">
+
+    <link rel="stylesheet" href="/css/archive.css">
+
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/addfun.css">
+
+    <!--move the file to pre-->
+    <script src="/js/jquery.min.js"></script>
+    <!--myadd-->
+    <script src="/js/typed.min.js"></script>
+
+</head>
+<body>
+    <!--PC-->
+    <div id="pc">
+        <!-- 这里单独引用side-pannel模块,里面是一个header标签 -->
+        <!--该文件仅包含header部分，包括背景图、遮罩层、目录等-->
+
+<header class="panel-cover panel-cover--collapsed panel-cover--collapsed--origin">
+
+
+
+  <div class="panel-main">
+    <div class="panel-main__inner panel-inverted">
+    <div class="panel-main__content">
+
+        
+
+        <!-- -----------------start首页布局----------------------- -->
+        
+        <!-- -----------------end 首页---------------------------- -->
+        <!-- -----------------start其他页面布局-------------------- -->
+        
+        <h1 class="panel-cover__title panel-title"><a class="un_decration" href="/" title="link to homepage">whbing</a></h1>
+        <hr class="panel-cover__divider" />
+
+        
+        <p class="panel-cover__description">
+            写是最好的记忆
+        </p>
+        <hr class="panel-cover__divider panel-cover__divider--secondary" />
+        
+        
+        <!-- -----------------end 其他---------------------------- -->
+
+        <div class="navigation-wrapper">
+
+          <nav class="cover-navigation cover-navigation--primary">
+            <ul class="navigation">
+
+              
+                
+                
+                    <li class="navigation__item not_home_li" >
+                
+                    <a href="/archives" title="" class="">文章</a>
+                </li>
+              
+                
+                
+                    <li class="navigation__item not_home_li" >
+                
+                    <a href="/archive" title="" class="">分类</a>
+                </li>
+              
+                
+                
+                    <li class="navigation__item not_home_li" >
+                
+                    <a href="/general" title="" class="">归档</a>
+                </li>
+              
+                
+                
+                    <li class="navigation__item not_home_li" >
+                
+                    <a href="/about" title="" class="">关于</a>
+                </li>
+              
+
+                
+                <li class="navigation__item not_home_li" >
+                    <span>
+                        <a class="github" target="_blank" href="https://github.com/whbing" title="github"><i class="fa fa-github-square fa-lg"></i></a>
+                    </span>
+                    <span>
+                        <a class="weibo" target="_blank" href="http://weibo.com/wanghongbing0704" title="weibo"><i class="fa fa-weibo fa-lg"></i></a>
+                    </span>
+                </li>
+                
+            </ul>
+          </nav>
+
+          <!-- ----------------------------
+To add a new social icon simply duplicate one of the list items from below
+and change the class in the <i> tag to match the desired social network
+and then add your link to the <a>. Here is a full list of social network
+classes that you can use:
+
+    icon-social-500px
+    icon-social-behance
+    icon-social-delicious
+    icon-social-designer-news
+    icon-social-deviant-art
+    icon-social-digg
+    icon-social-dribbble
+    icon-social-facebook
+    icon-social-flickr
+    icon-social-forrst
+    icon-social-foursquare
+    icon-social-github
+    icon-social-google-plus
+    icon-social-hi5
+    icon-social-instagram
+    icon-social-lastfm
+    icon-social-linkedin
+    icon-social-medium
+    icon-social-myspace
+    icon-social-path
+    icon-social-pinterest
+    icon-social-rdio
+    icon-social-reddit
+    icon-social-skype
+    icon-social-spotify
+    icon-social-stack-overflow
+    icon-social-steam
+    icon-social-stumbleupon
+    icon-social-treehouse
+    icon-social-tumblr
+    icon-social-twitter
+    icon-social-vimeo
+    icon-social-xbox
+    icon-social-yelp
+    icon-social-youtube
+    icon-social-zerply
+    icon-mail
+
+-------------------------------->
+
+<!-- add social info here -->
+
+
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="panel-cover--overlay"></div>
+  </div>
+
+</header>
+<!--如果不是home，加一个side的复制层-->
+
+    <div class="panel-cover--collapsed panel-cover--collapsed--copy"></div>
+
+        <div class="content-wrapper">
+            <div class="content-wrapper__inner entry">
+                
+
+<article class="post-container post-container--single">
+
+  <header class="post-header">
+    
+    <h1 class="post-title">spark简单分析天猫年底月销量</h1>
+
+    
+
+    <div class="post-meta">
+      <span title="建立时间" class="post-meta-item-icon">
+         <i class="fa fa-file-text-o"></i>
+      </span>
+      <time datetime="2018-02-01" class="post-meta__date date">2018-02-01</time>
+      <span class="post-meta-divider">|</span>
+
+      <span title="更新时间" class="post-meta-item-icon">
+         <i class="fa fa-file-text"></i>
+      </span>
+      <time datetime="2018-02-01" class="post-list__meta--date date">2018-02-01</time>
+
+      <span class="post-meta__tags tags">
+          <!-- 如果有分类 -->
+          
+            <span class="post-meta-divider">|</span>
+            <font class="categories">
+            <span title="分类" class="post-meta-item-icon">
+               <i class="fa fa-folder-o"></i>
+            </span>
+            <a class="categories-link" href="/categories/spark/">spark</a>
+            </font>
+          
+        <!-- 如果有tags -->
+          
+            <span class="post-meta-divider">|</span>
+            <span title="标签" class="post-meta-item-icon">
+               <i class="fa fa-tags"></i>
+            </span>
+            <font class="tags">
+              <a class="tags-link" href="/tags/scrapy/">scrapy</a>, <a class="tags-link" href="/tags/spark/">spark</a>
+            </font>
+          
+
+      </span>
+    </div>
+    
+    
+
+  </header>
+
+  <section id="post-content" class="article-content post">
+    <h1 id="1-引言"><a href="#1-引言" class="headerlink" title="1.引言"></a>1.引言</h1><p>在线上交易早已成熟的今天，电商交易量究竟有多少？为了清晰地比较天猫月销量，本文爬取了天猫2017年底、2018年初主流分类商品大量数据，并做了简单的数据统计。整体流程如下：</p>
+<p><img src="/images/tmall/out.png" alt="流程图"></p>
+<p>说明：利用scrapy爬取天猫店铺数据约<code>50万</code>条，导入<code>HDFS</code>分布式存储，利用大数据组件<code>spark</code>操作算子分析及<code>sparkSQL</code>查询分析得出处理结果，最后，<code>EChart</code>前端组件将结果以图表形式展现出来。</p>
+<h1 id="2-分析过程"><a href="#2-分析过程" class="headerlink" title="2.分析过程"></a>2.分析过程</h1><h2 id="2-1-scrapy爬取天猫数据"><a href="#2-1-scrapy爬取天猫数据" class="headerlink" title="2.1 scrapy爬取天猫数据"></a>2.1 scrapy爬取天猫数据</h2><ul>
+<li><code>Scrapy</code>是<code>Python</code>开发的一个快速、高层次的爬虫框架，用于抓取web站点并从页面中提取结构化的数据。</li>
+</ul>
+<p>首先爬取天猫首页分类数据，如<code>一级分类：女装、男装</code>，<code>二级分类：羽绒服女、针织衫女</code>等。结果保存为<code>class.json</code>，部分数据如下：</p>
+<pre><code class="json">{&quot;class2&quot;: [&quot;羽绒服女&quot;, &quot;毛呢外套女&quot;, &quot;毛衣女&quot;, &quot;针织衫女&quot;, &quot;棉服女&quot;, &quot;连衣裙&quot;,  &quot;风衣女装&quot;, &quot;裤子女装&quot;, &quot;卫衣女装&quot;, &quot;T恤女装&quot;, &quot;衬衫女装&quot;, &quot;半身裙&quot;, &quot;西装女&quot;, &quot;打底衫女&quot;, &quot;夹克女&quot;, &quot;皮衣女&quot;, &quot;妈妈装&quot;,&quot;婚纱礼服&quot;], &quot;class1&quot;: &quot;女装&quot;}
+{&quot;class2&quot;: [&quot;外套男装&quot;, &quot;夹克男装&quot;, &quot;衬衫男装&quot;, &quot;T恤男装&quot;, &quot;棒球服男装&quot;, &quot;牛仔外套男装&quot;, &quot;卫衣男装&quot;, &quot;西装男&quot;, &quot;风衣男装&quot;, &quot;皮衣男装&quot;, &quot;针织衫男装&quot;, &quot;呢大衣男装&quot;, &quot;休闲裤男装&quot;, &quot;牛仔裤男装&quot;, &quot;运动裤男装&quot;, &quot;九分裤男装&quot;, &quot;马甲男装&quot;, &quot;羽绒服男装&quot;, &quot;棉衣男&quot;, &quot;中老年男装&quot;], &quot;class1&quot;: &quot;男装&quot;}
+...
+{&quot;class2&quot;: [&quot;沙发&quot;, &quot;床&quot;, &quot;餐桌&quot;, &quot;床垫&quot;, &quot;茶几&quot;, &quot;电视柜&quot;, &quot;衣柜&quot;, &quot;鞋柜&quot;, &quot;椅凳&quot;, &quot;书桌&quot;, &quot;电脑桌&quot;, &quot;现代简约家具&quot;, &quot;美式家具&quot;, &quot;北欧家具&quot;, &quot;中式家具&quot;, &quot;儿童家具&quot;, &quot;真皮沙发&quot;, &quot;布艺沙发&quot;, &quot;皮床&quot;, &quot;实木床&quot;, &quot;儿童床&quot;, &quot;乳胶床垫&quot;, &quot;儿童学习桌&quot;, &quot;书架&quot;, &quot;椅子&quot;, &quot;电脑椅&quot;], &quot;class1&quot;: &quot;家具&quot;}
+{&quot;class2&quot;: [&quot;iphone&quot;, &quot;荣耀&quot;, &quot;三星&quot;, &quot;小米&quot;, &quot;华为&quot;, &quot;魅族&quot;, &quot;oppo&quot;, &quot;vivo&quot;], &quot;class1&quot;: &quot;手机&quot;}
+...
+</code></pre>
+<p>获取上述<code>{key:value}</code>后，我们以<code>search=value</code>的方式（等同于在页面搜索框输入关键字）进一步爬取店铺数据，对于每一个店铺我们获取到一级分类、二级分类、商品名称、价格、月销售量、店铺名称<code>{class1, class2, title, sales, price, store}</code>，对于每一个搜索的商品，我们按销量获取约前1000个店铺（最多1020个店铺）。数据形式如下：</p>
+<pre><code>{&quot;title&quot;: &quot;清仓薄款连帽韩版羽绒服&quot;, &quot;price&quot;: &quot;189.90&quot;, &quot;sales&quot;: 44000.0, &quot;class2&quot;: &quot;羽绒服女&quot;, &quot;store&quot;: &quot;翼素&quot;, &quot;class1&quot;: &quot;女装&quot;}
+{&quot;title&quot;: &quot;可自提&quot;, &quot;price&quot;: &quot;499.00&quot;, &quot;sales&quot;: 37000.0, &quot;class2&quot;: &quot;羽绒服女&quot;, &quot;store&quot;: &quot;优衣库官方旗舰店&quot;, &quot;class1&quot;: &quot;女装&quot;}
+...
+{&quot;title&quot;: &quot;Apple/苹果&quot;, &quot;price&quot;: &quot;8168.00&quot;, &quot;sales&quot;: 67000.0, &quot;class2&quot;: &quot;iphone&quot;, &quot;store&quot;: &quot;卓辰数码旗舰店&quot;, &quot;class1&quot;: &quot;手机&quot;}
+{&quot;title&quot;: &quot;Apple/苹果&quot;, &quot;price&quot;: &quot;9688.00&quot;, &quot;sales&quot;: 67000.0, &quot;class2&quot;: &quot;iphone&quot;, &quot;store&quot;: &quot;苏宁易购官方旗舰店&quot;, &quot;class1&quot;: &quot;手机&quot;}
+...
+</code></pre><p><br><br>本部分详细过程及代码见 <a href="https://github.com/whbing/taobaospider" target="_blank" rel="noopener">github.com/whbing/taobaospider</a> 欢迎补充与完善</p>
+<hr>
+<h2 id="2-2-spark数据分析"><a href="#2-2-spark数据分析" class="headerlink" title="2.2 spark数据分析"></a>2.2 spark数据分析</h2><ul>
+<li><code>HDFS</code>，即<code>Hadoop</code>分布式文件系统(HDFS)，能提供高吞吐量的数据访问，非常适合大规模数据集上的应用。</li>
+<li><code>Spark</code> 是一种与 Hadoop 相似的开源集群计算环境，是专为大规模数据处理而设计的快速通用的计算引擎，其中间输出结果可以保存在内存中，从而不再需要每次读写HDFS。</li>
+</ul>
+<p>首先，将结果文件传输至HDFS：</p>
+<pre><code>hadoop fs -put /folder/origin/... /folder/...
+</code></pre><p>为了描述商品结构，我们创建javabean：</p>
+<pre><code class="java">public class Product{
+    private String class1;
+    private String class2;
+    private int price;
+    private int  sales;
+    private String store;
+    private String title;
+    ...
+}
+</code></pre>
+<p>通过创建<code>SparkSession</code>对象获得<code>RDD</code>及<code>DataSets</code>进行后续分析操作。<br>对整个结果数据，我们以二级分类为分组，对每个商品的月销量进行<code>reduce</code>操作或sql分组求和，以总销量降序排序：</p>
+<pre><code>String sqlText = &quot;SELECT class2 ,class1,sum(CAST(sales AS DOUBLE)) as sum_sales,count(class2) AS class2_num 
+                FROM tmalldata GROUP BY class2,class1 ORDER BY sum_sales DESC&quot;;
+</code></pre><p>我们先选取部分分析结果，并做数据修正，原结果数据如下：</p>
+<pre><code>+--------+--------+------------+----------+
+| class2 | class1 |  sum_sales  |class2_num|
++--------+--------+------------+----------+
+|  裤子女 |    女装|1.7876922E7|      1020|
+|    苹果 |    生鲜|1.4588863E7|      1020|
+|    坚果 |    零食|1.3379527E7|      1020|
+|    秋裤 |    内衣|1.2177041E7|      1020|
+|  保暖内衣|    内衣|1.1318308E7|      1020|
+</code></pre><p>我们发现<code>苹果</code>与<code>坚果</code>销量过大，查看原店铺数据，发现有分类交叉干扰：</p>
+<pre><code>{&quot;title&quot;: &quot;Apple/&quot;, &quot;price&quot;: &quot;6688.00&quot;, &quot;sales&quot;: 58000.0, &quot;class2&quot;: &quot;苹果&quot;, &quot;store&quot;: &quot;苏宁易购官方旗舰店&quot;, &quot;class1&quot;: &quot;生鲜&quot;}
+...
+{&quot;title&quot;: &quot;Aosailo iPhone6电池&quot;, &quot;price&quot;: &quot;58.00&quot;, &quot;sales&quot;: 97000.0, &quot;class2&quot;: &quot;苹果&quot;, &quot;store&quot;: &quot;aosailo旗舰店&quot;, &quot;class1&quot;: &quot;生鲜&quot;}
+...
+{&quot;title&quot;: &quot;平安夜/&quot;, &quot;price&quot;: &quot;45.90&quot;, &quot;sales&quot;: 34000.0, &quot;class2&quot;: &quot;苹果&quot;, &quot;store&quot;: &quot;禧爱壹家旗舰店&quot;, &quot;class1&quot;: &quot;生鲜&quot;}
+...
+</code></pre><p>修正数据，取部分排名靠前数据如下：</p>
+<pre><code class="mysql">+------+------+-----------+----------+
+|class2|class1|  sum_sales|class2_num|
++------+------+-----------+----------+
+|  裤子女|    女装|1787.69万|      1020|
+|    秋裤|    内衣|1217.70万|      1020|
+|  保暖内衣|    内衣|1131.83万|      1020|
+|    棉袜|    内衣|  9809210.0|      1020|
+|  打底衫女|    女装|  8715402.0|      1020|
+|  外套男装|    男装|  8641977.0|      1020|
+| 休闲裤男|    男装|  8609225.0|      1020|
+|    男鞋|    鞋靴|  8176627.0|      1020|
+|    饼干|    零食|  7864698.0|      1020|
+|iphone|    手机|  7321395.0|       331|
+|  男士袜子|    内衣|  6933028.0|      1020|
+|   毛衣女|    女装|  6290753.0|      1020|
+|    抽纸|  个人护理|  6096333.0|      1020|
+|  针织衫女|    女装|  5841158.0|      1020|
+| 牛仔裤男|    男装|  5824355.0|      1020|
+|   棉衣男|    男装|  5569577.0|      1020|
+| 针织衫男|    男装|  5441920.0|      1020|
+|    手套|  配件配饰|  5284268.0|      1020|
+| 珊瑚绒睡衣|    内衣|  5129904.0|      1020|
+|   清洁剂|  个人护理|  4862618.0|      1020|
+|    板鞋|    鞋靴|  4853351.0|      1020|
+|    靴子|    鞋靴|  4763410.0|      1020|
+|    小米|    手机|  4746490.0|      1020|
+|    洁面|    美妆|  4727331.0|       960|
+|  儿童裤子|  童装玩具|  4694670.0|      1020|
+|   棉袜女|    内衣|  4651058.0|      1020|
+|    牛肉|    生鲜|  4630011.0|      1020|
+|   内裤女|    内衣|  4612125.0|      1020|
+|  长袖睡衣|    内衣|  4508023.0|      1020|
+|    围巾|  配件配饰|  4426260.0|      1020|
+|   内裤男|    内衣|  4417667.0|      1020|
+|   巧克力|    零食|  4368916.0|      1020|
+| 运动裤男装|    男装|  4332190.0|      1020|
+|    面膜|    美妆|  4282905.0|       900|
+|    乳液|    美妆|  4207855.0|       900|
+|    柠檬|    生鲜|  4167727.0|      1020|
+|    帽子|  配件配饰|  4166215.0|      1020|
+|    童鞋|  童装玩具|  3931569.0|      1020|
+|  卫衣男装|    男装|  3862480.0|      1020|
+|   雪地靴|    鞋靴|  3851849.0|      1020|
+|   洗发水|  个人护理|  3812539.0|      1020|
+|  oppo|    手机|  3725865.0|       361|
+|  T恤男装|    男装|  3696852.0|      1020|
+|   卫生巾|  个人护理|  3568475.0|      1020|
+|    牛奶|    美食|  3537466.0|      1020|
+|  男士睡衣|    内衣|  3532434.0|      1020|
+|    绘本|  儿童读物|  3492248.0|       636|
+...
+</code></pre>
+<p>本部分代码及文档见 <a href="https://github.com/whbing/TmallAnalysisWithSpark" target="_blank" rel="noopener">TmallAnalysis WithSpark</a></p>
+<hr>
+<h2 id="2-3-图表展示"><a href="#2-3-图表展示" class="headerlink" title="2.3 图表展示"></a>2.3 图表展示</h2><ul>
+<li><code>ECharts</code>，一个使用 JavaScript 实现的开源可视化库，可以流畅的运行在 PC 和移动设备上，可高度个性化定制的数据可视化图表。</li>
+</ul>
+<p><span style="font-size:1.4em;margin:1.4em 0"> / 1 /</span> 对全部数据按销量排序，选取<code>top50</code>结果如下：</p>
+
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div class="total1" style="height: 650px;margin-top:20px"></div>
+<!-- ECharts单文件引入 -->
+<script src="http://echarts.baidu.com/build/dist/echarts.js"></script>
+
+<script type="text/javascript">
+	// 路径配置
+	require.config({
+		paths : {
+			echarts : 'http://echarts.baidu.com/build/dist'
+		}
+	});
+
+	// 使用
+	require([ 'echarts', 'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+	],
+			function(ec) {
+				// 基于准备好的dom，初始化echarts图表
+				var myChart = ec.init(document.getElementsByClassName('total1')[0]);
+				var myChart2 = ec.init(document.getElementsByClassName('total1')[1]);
+
+				var option = {
+					title : {
+						text : '图1',
+					},
+					tooltip : {
+						trigger : 'axis'
+					},
+					legend : {
+						data : [ '2017年12月' ]
+					},
+					toolbox : {
+						show : true,
+						feature : {
+							restore : {
+								show : true
+							},
+							saveAsImage : {
+								show : true
+							}
+						}
+					},
+					//calculable : true,
+					xAxis : [ {
+						type : 'value',
+						boundaryGap : [ 0, 0.01 ]
+					} ],
+					yAxis : [ {
+						type : 'category',
+						data : [ '裤子女', '秋裤', '保暖内衣', '棉袜', '打底衫女', '外套男装',
+								'休闲裤男', '男鞋', '饼干', 'iphone', '男士袜子', '毛衣女',
+								'抽纸', '针织衫女', '牛仔裤男', '棉衣男', '针织衫男', '手套',
+								'珊瑚绒睡衣', '清洁剂', '板鞋', '靴子' ].reverse()
+					} ],
+
+					series : [ {
+						name : '2017年12月',
+						type : 'bar',
+						data : [ 17876900, 12177040, 11318300, 9809210.0,
+								8715402.0, 8641977.0, 8609225.0, 8176627.0,
+								7864698.0, 7321395.0, 6933028.0, 6290753.0,
+								6096333.0, 5841158.0, 5824355.0, 5569577.0,
+								5441920.0, 5284268.0, 5129904.0, 4862618.0,
+								4853351.0, 4763410.0 ].reverse(),
+						itemStyle : {
+							normal : { //柱状图颜色
+								color : '#b6a2df',
+								label : {
+									show : true, //显示文本
+									position : 'right', //数据值位置
+									textStyle : {
+										color : '#0000FF',
+										fontSize : '15',
+									}
+								}
+							}
+						}
+					}
+
+					]
+
+				};
+
+				// 为echarts对象加载数据
+				myChart.setOption(option);
+				myChart2.setOption(option);
+			});
+</script>
+
+
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div class="total2" style="height: 650px;margin-top:20px"></div>
+<!-- ECharts单文件引入
+<script src="http://echarts.baidu.com/build/dist/echarts.js"></script>-->
+
+<script type="text/javascript">
+	// 路径配置
+	require.config({
+		paths : {
+			echarts : 'http://echarts.baidu.com/build/dist'
+		}
+	});
+
+	// 使用
+	require([ 'echarts', 'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+	], function(ec) {
+		// 基于准备好的dom，初始化echarts图表
+		var myChart = ec.init(document.getElementsByClassName('total2')[0]);
+		var myChart2 = ec.init(document.getElementsByClassName('total2')[1]);
+
+		var option = {
+
+			title : {
+				text : '图2',
+			},
+			tooltip : {
+				trigger : 'axis',
+				axisPointer : { // 坐标轴指示器，坐标轴触发有效
+					type : 'line' // 默认为直线，可选为：'line' | 'shadow'
+				}
+			},
+			legend : {
+				data : [ '2017年12月' ]
+			},
+			toolbox : {
+				show : true,
+				feature : {
+					//mark : {show: true},
+					//dataView : {show: true, readOnly: true},
+					//magicType: {show: true, type: ['line', 'bar']},
+					restore : {
+						show : true
+					},
+					saveAsImage : {
+						show : true
+					}
+				}
+			},
+			//calculable : true,
+			xAxis : [ {
+				type : 'value',
+				boundaryGap : [ 0, 0.01 ]
+			} ],
+			yAxis : [ {
+				type : 'category',
+				data : [ '小米', '洁面', '儿童裤子', '棉袜女', '牛肉', '内裤女', '长袖睡衣', '围巾',
+						'内裤男', '巧克力', '运动裤男装', '面膜', '乳液', '柠檬', '帽子', '童鞋',
+						'卫衣男装', '雪地靴', '洗发水', 'oppo', 'T恤男装', '卫生巾', '牛奶',
+						'男士睡衣', '绘本' ].reverse()
+			} ],
+
+			axisLabel : [ {
+				show : true
+			} ],
+			series : [ {
+				name : '2017年12月',
+				type : 'bar',
+				data : [ 4746490.0, 4727331.0, 4694670.0, 4651058.0, 4630011.0,
+						4612125.0, 4508023.0, 4426260.0, 4417667.0, 4368916.0,
+						4332190.0, 4282905.0, 4207855.0, 4167727.0, 4166215.0,
+						3931569.0, 3862480.0, 3851849.0, 3812539.0, 3725865.0,
+						3696852.0, 3568475.0, 3537466.0, 3532434.0, 3492248.0 ]
+						.reverse(),
+				itemStyle : {
+					normal : { //柱状图颜色
+						color : '#b6a2df',//#2ec7c9',
+						label : {
+							show : true, //显示文本
+							position : 'right', //数据值位置
+							textStyle : {
+								color : '#0000FF',
+								fontSize : '15',
+
+							}
+						}
+					}
+				}
+
+			}
+
+			]
+
+		};
+
+		// 为echarts对象加载数据
+		myChart.setOption(option);
+		myChart2.setOption(option);
+	});
+</script>
+
+<p><span style="font-size:1.4em;margin:1.4em 0"> / 2 /</span> <code>女装</code>在整个销量中占比最高，我们对女装数据进一步分析，<code>销量</code>和<code>均价</code>展示如下：</p>
+
+
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div class="nvzhuang-bar" style="height:700px;margin-top:20px"></div>
+    <!-- ECharts单文件引入 -->
+
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: 'http://echarts.baidu.com/build/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementsByClassName('nvzhuang-bar')[0]);
+                var myChart2 = ec.init(document.getElementsByClassName('nvzhuang-bar')[1]);
+
+                var option = {
+
+                	    title : {
+                	        text: '女装',
+                	    },
+                	    tooltip : {
+                	        trigger: 'axis',
+                	        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                	            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                	        }
+                	    },
+                	    legend: {
+                	        data:['2017年12月销量','平均价格']
+                	    },
+                	    toolbox: {
+                	        show : true,
+                	        feature : {
+                	            //mark : {show: true},
+                	            //dataView : {show: true, readOnly: true},
+                	            //magicType: {show: true, type: ['line', 'bar']},
+                	            restore : {show: true},
+                	            saveAsImage : {show: true}
+                	        }
+                	    },
+                	    //calculable : true,
+                	    xAxis : [
+                	        {
+                	            type : 'value',
+                	            boundaryGap : [0, 0.01]
+                	        }
+                	    ],
+                	    yAxis : [
+                	        {
+                	            type : 'category',
+                	            data : [  	'裤子女',
+                	                      	'打底衫女',
+                	                      	 '毛衣女',
+                	                      	'针织衫女',
+                	                      	 '棉服女',
+                	                      	'羽绒服女',
+                	                      	'卫衣女装',
+                	                      	'T恤女装',
+                	                      	 '妈妈装',
+                	                      	 '半身裙',
+                	                      	'毛呢外套女',
+                	                      	'衬衫女装',
+                	                      	 '连衣裙',
+                	                      	 '夹克女',
+                	                      	'风衣女装',
+                	                      	 '皮衣女',
+                	                      	'婚纱礼服',
+                	                      	 '西装女'
+										].reverse()
+                	        }
+                	    ],
+
+                	    axisLabel:[
+              	               {show:true}
+            	               ],
+                	    series : [
+                	        {
+                	            name:'2017年12月销量',
+                	            type:'bar',
+                	            data:[17876922,
+                	                  8715402.0,
+                	                  6290753.0,
+                	                   5841158.0,
+                	                  3196945.0,
+                	                   2939183.0,
+                	                   2577558.0,
+                	                  2408077.0,
+                	                  1863748.0,
+                	                  1431816.0,
+                	                  1106528.0,
+                	                   1044920.0,
+                	                   912888.0,
+                	                   280154.0,
+                	                    184813.0,
+                	                   179334.0,
+                	                    143646.0,
+                	                   137403.0
+
+								].reverse(),
+								itemStyle:{
+				                    normal:{    //柱状图颜色
+				                        color:'#e675bd',//#2ec7c9',
+				                        label:{
+				                            show: true,   //显示文本
+				                            position: 'right',  //数据值位置
+				                            textStyle:{
+				                                color:'#0000FF',
+				                                fontSize:'15',
+
+				                            }
+				                        }
+				                    }
+				                }
+
+                	        },
+                	        {
+                	            name:'平均价格',
+                	            type:'bar',
+                	            data:[63.66,
+                	                  70.79,
+                	                  93.32,
+                	                  96.70,
+                	                  184.65,
+                	                  385.8,
+                	                  77.80,
+                	                  60.12,
+                	                  184.95,
+                	                  103.11,
+                	                  368.93,
+                	                  104.84,
+                	                  188.32,
+                	                  239.14,
+                	                  315.47,
+                	                  857.67,
+                	                  463.88,
+                	                  393.21
+
+								].reverse(),
+								itemStyle:{
+				                    normal:{    //柱状图颜色
+				                        color:'#2ec7c9',//#2ec7c9',
+				                        label:{
+				                            show: true,   //显示文本
+				                            position: 'right',  //数据值位置
+				                            textStyle:{
+				                                color:'#0000ff',
+				                                fontSize:'15',
+
+				                            }
+				                        }
+				                    }
+				                }
+
+                	        }
+                	    ]
+                	};
+
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+                myChart2.setOption(option);
+            }
+        );
+    </script>
+
+ 
+
+
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div class="nvzhuang-pie" style="height: 450px;margin-top:20px"></div>
+<!-- ECharts单文件引入 -->
+
+<script type="text/javascript">
+	// 路径配置
+	require.config({
+		paths : {
+			echarts : 'http://echarts.baidu.com/build/dist'
+		}
+	});
+
+	// 使用
+	require([ 'echarts', 'echarts/chart/pie' // 使用柱状图就加载bar模块，按需加载
+	], function(ec) {
+		// 基于准备好的dom，初始化echarts图表
+		var myChart = ec.init(document.getElementsByClassName('nvzhuang-pie')[0]);
+		var myChart2 = ec.init(document.getElementsByClassName('nvzhuang-pie')[1]);
+
+		var option = {
+			title : {
+				text : '女装销售比例',
+
+			},
+			tooltip : {
+				trigger : 'item',
+				formatter : "{a} <br/>{b} : {c} ({d}%)"
+			},
+
+			toolbox : {
+				show : true,
+				feature : {
+					restore : {
+						show : true
+					},
+					saveAsImage : {
+						show : true
+					}
+				}
+			},
+			calculable : true,
+			series : [ {
+				name : '女装销售比例',
+				type : 'pie',
+				radius : '55%',
+				center : [ '50%', '60%' ],
+				data : [ {
+					value : 17876922,
+					name : '裤子女装'
+				}, {
+					value : 8715402,
+					name : '打底衫女'
+				}, {
+					value : 6290753,
+					name : '毛衣女'
+				}, {
+					value : 5841158,
+					name : '针织衫女'
+				}, {
+					value : 3196945,
+					name : '棉服女'
+				}, {
+					value : 2939183,
+					name : '羽绒服女'
+				}, {
+					value : 2577558,
+					name : '卫衣女装'
+				}, {
+					value : 2408077,
+					name : 'T恤女装'
+				}, {
+					value : 1863748,
+					name : '妈妈装'
+				}, {
+					value : 1431816.0,
+					name : '半身裙'
+				}, {
+					value : 1106528.0,
+					name : '毛呢外套女'
+				}, {
+					value : 1044920.0,
+					name : '衬衫女装'
+				}, {
+					value : 912888.0,
+					name : '连衣裙'
+				}, {
+					value : 280154.0,
+					name : '夹克女'
+				}, {
+					value : 184813.0,
+					name : '风衣女装'
+				}, {
+					value : 179334.0,
+					name : '皮衣女'
+				}, {
+					value : 143646.0,
+					name : '婚纱礼服'
+				}, {
+					value : 137403.0,
+					name : '西装女'
+				}
+
+				]
+			} ]
+		};
+
+		// 为echarts对象加载数据
+		myChart.setOption(option);
+		myChart2.setOption(option);
+	});
+</script>
+
+
+<p><span style="font-size:1.4em;margin:1.4em 0"> / 3 /</span>  <code>手机</code>销量如下所示：<br>
+
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div class="phone1" style="height:320px;margin-top:20px"></div>
+    <!-- ECharts单文件引入 -->
+
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: 'http://echarts.baidu.com/build/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementsByClassName('phone1')[0]);
+                var myChart2 = ec.init(document.getElementsByClassName('phone1')[1]);
+
+                var option = {
+
+                	    title : {
+                	        text: '手机销量',
+                	    },
+                	    tooltip : {
+                	        trigger: 'axis',
+                	        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                	            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                	        }
+                	    },
+                	    legend: {
+                	        data:['2017年12月手机销量']
+                	    },
+                	    toolbox: {
+                	        show : true,
+                	        feature : {
+                	            //mark : {show: true},
+                	            //dataView : {show: true, readOnly: true},
+                	            //magicType: {show: true, type: ['line', 'bar']},
+                	            restore : {show: true},
+                	            saveAsImage : {show: true}
+                	        }
+                	    },
+                	    //calculable : true,
+                	    xAxis : [
+                	        {
+                	            type : 'value',
+                	            boundaryGap : [0, 0.01]
+                	        }
+                	    ],
+                	    yAxis : [
+                	        {
+                	            type : 'category',
+                	            data : [  	'iphone',
+                	                      	'小米',
+                	                      	'oppo',
+                	                      	'荣耀',
+                	                      	'华为',
+                	                      	'魅族',
+                	                      	'vivo',
+                	                      	'三星'
+
+										].reverse()
+                	        }
+                	    ],
+
+                	    axisLabel:[
+              	               {show:true}
+            	               ],
+                	    series : [
+                	        {
+                	            name:'2017年12月手机销量',
+                	            type:'bar',
+                	            data:[7321395.0,
+                	                  4746490.0,
+                	                  3725865.0,
+                	                  455962.0,
+                	                  350468.0,
+                	                  144537.0,
+                	                  133113.0,
+                	                  112196.0,
+								].reverse(),
+								itemStyle:{
+				                    normal:{    //柱状图颜色
+				                        color:'#b6a2df',//#2ec7c9',
+				                        label:{
+				                            show: true,   //显示文本
+				                            position: 'right',  //数据值位置
+				                            textStyle:{
+				                                color:'#0000FF',
+				                                fontSize:'18',
+
+				                            }
+				                        }
+				                    }
+				                }
+
+                	        }
+
+                	    ]
+
+                	};
+
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+                myChart2.setOption(option);
+            }
+        );
+    </script>
+
+<br>
+
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div class="phone-pie" style="height:450px;margin-top:20px"></div>
+    <!-- ECharts单文件引入 -->
+
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: 'http://echarts.baidu.com/build/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/pie' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementsByClassName('phone-pie')[0]);
+                var myChart2 = ec.init(document.getElementsByClassName('phone-pie')[1]);
+
+                var option = {
+                	    title : {
+                	        text: '手机销量比例',
+
+
+                	    },
+                	    tooltip : {
+                	        trigger: 'item',
+                	        formatter: "{a} <br/>{b} : {c} ({d}%)"
+                	    },
+
+                	    toolbox: {
+                	        show : true,
+                	        feature : {
+                	            restore : {show: true},
+                	            saveAsImage : {show: true}
+                	        }
+                	    },
+                	    calculable : true,
+                	    series : [
+                	        {
+                	            name:'手机销量',
+                	            type:'pie',
+                	            radius : '55%',
+                	            center: ['50%', '60%'],
+                	            data:[
+									{value:7321395.0, name:'iphone'},
+									{value:4746490.0, name:'小米'},
+									{value:3725865.0,  name:'oppo'},
+									{value:455962.0, name:'荣耀'},
+									{value:350468.0,  name:'华为'},
+									{value:144537.0, name:'魅族'},
+									{value:133113.0, name:'vivo'},
+                	                {value:112196.0,  name:'三星'}
+
+                	              ]
+                	        }
+                	    ]
+                	};
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+                myChart2.setOption(option);
+            }
+        );
+    </script>
+
+</p>
+<p><span style="font-size:1.4em;margin:1.4em 0"> / 4 /</span>  <code>零食</code> <code>销量</code>及<code>平均价格</code>如下所示：</p>
+
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div class="lingshi-bar" style="height: 650px;margin-top:20px"></div>
+<!-- ECharts单文件引入 -->
+
+<script type="text/javascript">
+	// 路径配置
+	require.config({
+		paths : {
+			echarts : 'http://echarts.baidu.com/build/dist'
+		}
+	});
+
+	// 使用
+	require([ 'echarts', 'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+	], function(ec) {
+		// 基于准备好的dom，初始化echarts图表
+		var myChart = ec.init(document.getElementsByClassName('lingshi-bar')[0]);
+		var myChart2 = ec.init(document.getElementsByClassName('lingshi-bar')[1]);
+
+		var option = {
+
+			title : {
+				text : '零食',
+			},
+			tooltip : {
+				trigger : 'axis',
+				axisPointer : { // 坐标轴指示器，坐标轴触发有效
+					type : 'shadow' // 默认为直线，可选为：'line' | 'shadow'
+				}
+			},
+			legend : {
+				data : [ '2017年12月零食销量', '平均价格' ]
+			},
+			toolbox : {
+				show : true,
+				feature : {
+					//mark : {show: true},
+					//dataView : {show: true, readOnly: true},
+					//magicType: {show: true, type: ['line', 'bar']},
+					restore : {
+						show : true
+					},
+					saveAsImage : {
+						show : true
+					}
+				}
+			},
+			//calculable : true,
+			xAxis : [ {
+				type : 'value',
+				boundaryGap : [ 0, 0.01 ]
+			} ],
+			yAxis : [ {
+				type : 'category',
+				data : [ '饼干', '巧克力', '辣条', '牛肉干', '鸭肉', '夏威夷果', '碧根果', '芒果干',
+						'巴旦木', '开心果', '葡萄干', '棒棒糖', '牛奶糖', '薄荷糖', '果冻', '话梅糖',
+						'甜甜圈', '蓝莓干', '椰蓉球', '泡泡糖'
+
+				].reverse()
+			} ],
+
+			axisLabel : [ {
+				show : true
+			} ],
+			series : [
+					{
+						name : '2017年12月零食销量',
+						type : 'bar',
+						data : [ 7864698.0, 4368916.0, 3260309.0, 2424924.0,
+								2385978.0, 2290653.0, 1589494.0, 1520751.0,
+								1347743.0, 1293426.0, 1259383.0, 917969.0,
+								820685.0, 549718.0, 538237.0, 353385.0,
+								231681.0, 177681.0, 83488.0, 24702.0
+
+						].reverse(),
+						itemStyle : {
+							normal : { //柱状图颜色
+								color : '#b6a2df',//#2ec7c9',
+								label : {
+									show : true, //显示文本
+									position : 'right', //数据值位置
+									textStyle : {
+										color : '#0000FF',
+										fontSize : '15',
+
+									}
+								}
+							}
+						}
+
+					},
+					{
+						name : '平均价格',
+						type : 'bar',
+						data : [ 27.93, 45.04, 18.55, 49.16, 38.66, 48.82,
+								46.83, 32.17, 38.24, 54.97, 26.95, 31.47,
+								26.72, 34.90, 26.79, 26.47, 56.67, 161.87,
+								33.80, 409.11
+
+						].reverse(),
+						itemStyle : {
+							normal : { //柱状图颜色
+								color : '#87cefa',//#2ec7c9',
+								label : {
+									show : true, //显示文本
+									position : 'right', //数据值位置
+									textStyle : {
+										color : '#0000FF',
+										fontSize : '15',
+
+									}
+								}
+							}
+						}
+
+					}
+
+			]
+
+		};
+
+		// 为echarts对象加载数据
+		myChart.setOption(option);
+		myChart2.setOption(option);
+	});
+</script>
+
+
+<h1 id="4-小结"><a href="#4-小结" class="headerlink" title="4 小结"></a>4 小结</h1><p>本文较为浅显的讲解了数据抓取–分析–展示的全过程。值的说明的是，由于数据非实时数据，可能有数据偏移；<br>spark的分析部分较为基础，更复杂的分析，后续会更新。欢迎对github文档的补充与代码的完善，欢迎指导。<br>附本次代码，详细说明见对应文档。</p>
+<ol>
+<li><p>数据爬虫见 <a href="https://github.com/whbing/taobaospider" target="_blank" rel="noopener">taobaospider</a></p>
+</li>
+<li><p>spark分析代码及Echart展示见 <a href="https://github.com/whbing/TmallAnalysisWithSpark" target="_blank" rel="noopener">TmallAnalysis WithSpark</a></p>
+</li>
+</ol>
+
+  </section>
+
+  <section class="post-comments">
+
+    <!-- 将评论系统（例如Disqus、多说、友言、畅言等）提供的代码片段粘贴在这里 -->
+    
+</section>
+
+  <!--<link rel="stylesheet"-->
+        <!--href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">-->
+  <!--<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>-->
+</article>
+
+
+                <footer class="footer">
+
+    <span class="footer__copyright">&copy; 2017-2018. | 由<a href="https://hexo.io/">Hexo</a>强力驱动 | 主题<a href="https://github.com/whbing/lovetter">Lovetter</a></span>
+    
+</footer>
+            </div>
+        </div>
+    </div>
+
+    <!--mobile-->
+    <div id="mobile">
+        <div id="m-header" class="mid-col">
+    <nav id="mobile-nav">
+        <div class="slider-trigger">
+            <i class="fa fa-bars" aria-hidden="true"></i>
+        </div>
+        <div class="overlay js-overlay" style="background: rgb(77, 77, 77); visibility: visible;"></div>
+        <div class="intrude-less">
+            <header id="header" class="inner">
+                <div class="profilepic">
+                    <img src="/images/myphoto.jpg" width="100%">
+                </div>
+                <hgroup>
+                    <h1 class="header-author">whbing</h1>
+                </hgroup>
+
+                <p class="header-subtitle">
+                    <i class="fa fa-heart-o"></i>&nbsp;写是最好的记忆&nbsp;<i class="fa fa-heart-o"></i>
+                </p>
+
+                <div class="social">
+                    <a class="github" target="_blank" href="https://github.com/whbing" title="github"><i class="fa fa-github-square fa-lg"></i></a>
+
+                    <a class="weibo" target="_blank" href="http://weibo.com/wanghongbing0704" title="weibo"><i class="fa fa-weibo fa-lg"></i></a>
+                </div>
+                <nav class="header-menu">
+                    <ul>
+                        <li class="mobile-menu-li mobile-menu-home">
+                            
+                            <a href="/">主页</a>
+                            
+                        </li>
+                        <li class="mobile-menu-li mobile-menu-archives">
+                            
+                            <a href="/general/" >归档</a>
+                            
+                        </li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+
+    </nav>
+</div>
+        <div class="content-wrapper">
+            <div class="content-wrapper__inner entry">
+                
+
+<article class="post-container post-container--single">
+
+  <header class="post-header">
+    
+    <h1 class="post-title">spark简单分析天猫年底月销量</h1>
+
+    
+
+    <div class="post-meta">
+      <span title="建立时间" class="post-meta-item-icon">
+         <i class="fa fa-file-text-o"></i>
+      </span>
+      <time datetime="2018-02-01" class="post-meta__date date">2018-02-01</time>
+      <span class="post-meta-divider">|</span>
+
+      <span title="更新时间" class="post-meta-item-icon">
+         <i class="fa fa-file-text"></i>
+      </span>
+      <time datetime="2018-02-01" class="post-list__meta--date date">2018-02-01</time>
+
+      <span class="post-meta__tags tags">
+          <!-- 如果有分类 -->
+          
+            <span class="post-meta-divider">|</span>
+            <font class="categories">
+            <span title="分类" class="post-meta-item-icon">
+               <i class="fa fa-folder-o"></i>
+            </span>
+            <a class="categories-link" href="/categories/spark/">spark</a>
+            </font>
+          
+        <!-- 如果有tags -->
+          
+            <span class="post-meta-divider">|</span>
+            <span title="标签" class="post-meta-item-icon">
+               <i class="fa fa-tags"></i>
+            </span>
+            <font class="tags">
+              <a class="tags-link" href="/tags/scrapy/">scrapy</a>, <a class="tags-link" href="/tags/spark/">spark</a>
+            </font>
+          
+
+      </span>
+    </div>
+    
+    
+
+  </header>
+
+  <section id="post-content" class="article-content post">
+    <h1 id="1-引言"><a href="#1-引言" class="headerlink" title="1.引言"></a>1.引言</h1><p>在线上交易早已成熟的今天，电商交易量究竟有多少？为了清晰地比较天猫月销量，本文爬取了天猫2017年底、2018年初主流分类商品大量数据，并做了简单的数据统计。整体流程如下：</p>
+<p><img src="/images/tmall/out.png" alt="流程图"></p>
+<p>说明：利用scrapy爬取天猫店铺数据约<code>50万</code>条，导入<code>HDFS</code>分布式存储，利用大数据组件<code>spark</code>操作算子分析及<code>sparkSQL</code>查询分析得出处理结果，最后，<code>EChart</code>前端组件将结果以图表形式展现出来。</p>
+<h1 id="2-分析过程"><a href="#2-分析过程" class="headerlink" title="2.分析过程"></a>2.分析过程</h1><h2 id="2-1-scrapy爬取天猫数据"><a href="#2-1-scrapy爬取天猫数据" class="headerlink" title="2.1 scrapy爬取天猫数据"></a>2.1 scrapy爬取天猫数据</h2><ul>
+<li><code>Scrapy</code>是<code>Python</code>开发的一个快速、高层次的爬虫框架，用于抓取web站点并从页面中提取结构化的数据。</li>
+</ul>
+<p>首先爬取天猫首页分类数据，如<code>一级分类：女装、男装</code>，<code>二级分类：羽绒服女、针织衫女</code>等。结果保存为<code>class.json</code>，部分数据如下：</p>
+<pre><code class="json">{&quot;class2&quot;: [&quot;羽绒服女&quot;, &quot;毛呢外套女&quot;, &quot;毛衣女&quot;, &quot;针织衫女&quot;, &quot;棉服女&quot;, &quot;连衣裙&quot;,  &quot;风衣女装&quot;, &quot;裤子女装&quot;, &quot;卫衣女装&quot;, &quot;T恤女装&quot;, &quot;衬衫女装&quot;, &quot;半身裙&quot;, &quot;西装女&quot;, &quot;打底衫女&quot;, &quot;夹克女&quot;, &quot;皮衣女&quot;, &quot;妈妈装&quot;,&quot;婚纱礼服&quot;], &quot;class1&quot;: &quot;女装&quot;}
+{&quot;class2&quot;: [&quot;外套男装&quot;, &quot;夹克男装&quot;, &quot;衬衫男装&quot;, &quot;T恤男装&quot;, &quot;棒球服男装&quot;, &quot;牛仔外套男装&quot;, &quot;卫衣男装&quot;, &quot;西装男&quot;, &quot;风衣男装&quot;, &quot;皮衣男装&quot;, &quot;针织衫男装&quot;, &quot;呢大衣男装&quot;, &quot;休闲裤男装&quot;, &quot;牛仔裤男装&quot;, &quot;运动裤男装&quot;, &quot;九分裤男装&quot;, &quot;马甲男装&quot;, &quot;羽绒服男装&quot;, &quot;棉衣男&quot;, &quot;中老年男装&quot;], &quot;class1&quot;: &quot;男装&quot;}
+...
+{&quot;class2&quot;: [&quot;沙发&quot;, &quot;床&quot;, &quot;餐桌&quot;, &quot;床垫&quot;, &quot;茶几&quot;, &quot;电视柜&quot;, &quot;衣柜&quot;, &quot;鞋柜&quot;, &quot;椅凳&quot;, &quot;书桌&quot;, &quot;电脑桌&quot;, &quot;现代简约家具&quot;, &quot;美式家具&quot;, &quot;北欧家具&quot;, &quot;中式家具&quot;, &quot;儿童家具&quot;, &quot;真皮沙发&quot;, &quot;布艺沙发&quot;, &quot;皮床&quot;, &quot;实木床&quot;, &quot;儿童床&quot;, &quot;乳胶床垫&quot;, &quot;儿童学习桌&quot;, &quot;书架&quot;, &quot;椅子&quot;, &quot;电脑椅&quot;], &quot;class1&quot;: &quot;家具&quot;}
+{&quot;class2&quot;: [&quot;iphone&quot;, &quot;荣耀&quot;, &quot;三星&quot;, &quot;小米&quot;, &quot;华为&quot;, &quot;魅族&quot;, &quot;oppo&quot;, &quot;vivo&quot;], &quot;class1&quot;: &quot;手机&quot;}
+...
+</code></pre>
+<p>获取上述<code>{key:value}</code>后，我们以<code>search=value</code>的方式（等同于在页面搜索框输入关键字）进一步爬取店铺数据，对于每一个店铺我们获取到一级分类、二级分类、商品名称、价格、月销售量、店铺名称<code>{class1, class2, title, sales, price, store}</code>，对于每一个搜索的商品，我们按销量获取约前1000个店铺（最多1020个店铺）。数据形式如下：</p>
+<pre><code>{&quot;title&quot;: &quot;清仓薄款连帽韩版羽绒服&quot;, &quot;price&quot;: &quot;189.90&quot;, &quot;sales&quot;: 44000.0, &quot;class2&quot;: &quot;羽绒服女&quot;, &quot;store&quot;: &quot;翼素&quot;, &quot;class1&quot;: &quot;女装&quot;}
+{&quot;title&quot;: &quot;可自提&quot;, &quot;price&quot;: &quot;499.00&quot;, &quot;sales&quot;: 37000.0, &quot;class2&quot;: &quot;羽绒服女&quot;, &quot;store&quot;: &quot;优衣库官方旗舰店&quot;, &quot;class1&quot;: &quot;女装&quot;}
+...
+{&quot;title&quot;: &quot;Apple/苹果&quot;, &quot;price&quot;: &quot;8168.00&quot;, &quot;sales&quot;: 67000.0, &quot;class2&quot;: &quot;iphone&quot;, &quot;store&quot;: &quot;卓辰数码旗舰店&quot;, &quot;class1&quot;: &quot;手机&quot;}
+{&quot;title&quot;: &quot;Apple/苹果&quot;, &quot;price&quot;: &quot;9688.00&quot;, &quot;sales&quot;: 67000.0, &quot;class2&quot;: &quot;iphone&quot;, &quot;store&quot;: &quot;苏宁易购官方旗舰店&quot;, &quot;class1&quot;: &quot;手机&quot;}
+...
+</code></pre><p><br><br>本部分详细过程及代码见 <a href="https://github.com/whbing/taobaospider" target="_blank" rel="noopener">github.com/whbing/taobaospider</a> 欢迎补充与完善</p>
+<hr>
+<h2 id="2-2-spark数据分析"><a href="#2-2-spark数据分析" class="headerlink" title="2.2 spark数据分析"></a>2.2 spark数据分析</h2><ul>
+<li><code>HDFS</code>，即<code>Hadoop</code>分布式文件系统(HDFS)，能提供高吞吐量的数据访问，非常适合大规模数据集上的应用。</li>
+<li><code>Spark</code> 是一种与 Hadoop 相似的开源集群计算环境，是专为大规模数据处理而设计的快速通用的计算引擎，其中间输出结果可以保存在内存中，从而不再需要每次读写HDFS。</li>
+</ul>
+<p>首先，将结果文件传输至HDFS：</p>
+<pre><code>hadoop fs -put /folder/origin/... /folder/...
+</code></pre><p>为了描述商品结构，我们创建javabean：</p>
+<pre><code class="java">public class Product{
+    private String class1;
+    private String class2;
+    private int price;
+    private int  sales;
+    private String store;
+    private String title;
+    ...
+}
+</code></pre>
+<p>通过创建<code>SparkSession</code>对象获得<code>RDD</code>及<code>DataSets</code>进行后续分析操作。<br>对整个结果数据，我们以二级分类为分组，对每个商品的月销量进行<code>reduce</code>操作或sql分组求和，以总销量降序排序：</p>
+<pre><code>String sqlText = &quot;SELECT class2 ,class1,sum(CAST(sales AS DOUBLE)) as sum_sales,count(class2) AS class2_num 
+                FROM tmalldata GROUP BY class2,class1 ORDER BY sum_sales DESC&quot;;
+</code></pre><p>我们先选取部分分析结果，并做数据修正，原结果数据如下：</p>
+<pre><code>+--------+--------+------------+----------+
+| class2 | class1 |  sum_sales  |class2_num|
++--------+--------+------------+----------+
+|  裤子女 |    女装|1.7876922E7|      1020|
+|    苹果 |    生鲜|1.4588863E7|      1020|
+|    坚果 |    零食|1.3379527E7|      1020|
+|    秋裤 |    内衣|1.2177041E7|      1020|
+|  保暖内衣|    内衣|1.1318308E7|      1020|
+</code></pre><p>我们发现<code>苹果</code>与<code>坚果</code>销量过大，查看原店铺数据，发现有分类交叉干扰：</p>
+<pre><code>{&quot;title&quot;: &quot;Apple/&quot;, &quot;price&quot;: &quot;6688.00&quot;, &quot;sales&quot;: 58000.0, &quot;class2&quot;: &quot;苹果&quot;, &quot;store&quot;: &quot;苏宁易购官方旗舰店&quot;, &quot;class1&quot;: &quot;生鲜&quot;}
+...
+{&quot;title&quot;: &quot;Aosailo iPhone6电池&quot;, &quot;price&quot;: &quot;58.00&quot;, &quot;sales&quot;: 97000.0, &quot;class2&quot;: &quot;苹果&quot;, &quot;store&quot;: &quot;aosailo旗舰店&quot;, &quot;class1&quot;: &quot;生鲜&quot;}
+...
+{&quot;title&quot;: &quot;平安夜/&quot;, &quot;price&quot;: &quot;45.90&quot;, &quot;sales&quot;: 34000.0, &quot;class2&quot;: &quot;苹果&quot;, &quot;store&quot;: &quot;禧爱壹家旗舰店&quot;, &quot;class1&quot;: &quot;生鲜&quot;}
+...
+</code></pre><p>修正数据，取部分排名靠前数据如下：</p>
+<pre><code class="mysql">+------+------+-----------+----------+
+|class2|class1|  sum_sales|class2_num|
++------+------+-----------+----------+
+|  裤子女|    女装|1787.69万|      1020|
+|    秋裤|    内衣|1217.70万|      1020|
+|  保暖内衣|    内衣|1131.83万|      1020|
+|    棉袜|    内衣|  9809210.0|      1020|
+|  打底衫女|    女装|  8715402.0|      1020|
+|  外套男装|    男装|  8641977.0|      1020|
+| 休闲裤男|    男装|  8609225.0|      1020|
+|    男鞋|    鞋靴|  8176627.0|      1020|
+|    饼干|    零食|  7864698.0|      1020|
+|iphone|    手机|  7321395.0|       331|
+|  男士袜子|    内衣|  6933028.0|      1020|
+|   毛衣女|    女装|  6290753.0|      1020|
+|    抽纸|  个人护理|  6096333.0|      1020|
+|  针织衫女|    女装|  5841158.0|      1020|
+| 牛仔裤男|    男装|  5824355.0|      1020|
+|   棉衣男|    男装|  5569577.0|      1020|
+| 针织衫男|    男装|  5441920.0|      1020|
+|    手套|  配件配饰|  5284268.0|      1020|
+| 珊瑚绒睡衣|    内衣|  5129904.0|      1020|
+|   清洁剂|  个人护理|  4862618.0|      1020|
+|    板鞋|    鞋靴|  4853351.0|      1020|
+|    靴子|    鞋靴|  4763410.0|      1020|
+|    小米|    手机|  4746490.0|      1020|
+|    洁面|    美妆|  4727331.0|       960|
+|  儿童裤子|  童装玩具|  4694670.0|      1020|
+|   棉袜女|    内衣|  4651058.0|      1020|
+|    牛肉|    生鲜|  4630011.0|      1020|
+|   内裤女|    内衣|  4612125.0|      1020|
+|  长袖睡衣|    内衣|  4508023.0|      1020|
+|    围巾|  配件配饰|  4426260.0|      1020|
+|   内裤男|    内衣|  4417667.0|      1020|
+|   巧克力|    零食|  4368916.0|      1020|
+| 运动裤男装|    男装|  4332190.0|      1020|
+|    面膜|    美妆|  4282905.0|       900|
+|    乳液|    美妆|  4207855.0|       900|
+|    柠檬|    生鲜|  4167727.0|      1020|
+|    帽子|  配件配饰|  4166215.0|      1020|
+|    童鞋|  童装玩具|  3931569.0|      1020|
+|  卫衣男装|    男装|  3862480.0|      1020|
+|   雪地靴|    鞋靴|  3851849.0|      1020|
+|   洗发水|  个人护理|  3812539.0|      1020|
+|  oppo|    手机|  3725865.0|       361|
+|  T恤男装|    男装|  3696852.0|      1020|
+|   卫生巾|  个人护理|  3568475.0|      1020|
+|    牛奶|    美食|  3537466.0|      1020|
+|  男士睡衣|    内衣|  3532434.0|      1020|
+|    绘本|  儿童读物|  3492248.0|       636|
+...
+</code></pre>
+<p>本部分代码及文档见 <a href="https://github.com/whbing/TmallAnalysisWithSpark" target="_blank" rel="noopener">TmallAnalysis WithSpark</a></p>
+<hr>
+<h2 id="2-3-图表展示"><a href="#2-3-图表展示" class="headerlink" title="2.3 图表展示"></a>2.3 图表展示</h2><ul>
+<li><code>ECharts</code>，一个使用 JavaScript 实现的开源可视化库，可以流畅的运行在 PC 和移动设备上，可高度个性化定制的数据可视化图表。</li>
+</ul>
+<p><span style="font-size:1.4em;margin:1.4em 0"> / 1 /</span> 对全部数据按销量排序，选取<code>top50</code>结果如下：</p>
+
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div class="total1" style="height: 650px;margin-top:20px"></div>
+<!-- ECharts单文件引入 -->
+<script src="http://echarts.baidu.com/build/dist/echarts.js"></script>
+
+<script type="text/javascript">
+	// 路径配置
+	require.config({
+		paths : {
+			echarts : 'http://echarts.baidu.com/build/dist'
+		}
+	});
+
+	// 使用
+	require([ 'echarts', 'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+	],
+			function(ec) {
+				// 基于准备好的dom，初始化echarts图表
+				var myChart = ec.init(document.getElementsByClassName('total1')[0]);
+				var myChart2 = ec.init(document.getElementsByClassName('total1')[1]);
+
+				var option = {
+					title : {
+						text : '图1',
+					},
+					tooltip : {
+						trigger : 'axis'
+					},
+					legend : {
+						data : [ '2017年12月' ]
+					},
+					toolbox : {
+						show : true,
+						feature : {
+							restore : {
+								show : true
+							},
+							saveAsImage : {
+								show : true
+							}
+						}
+					},
+					//calculable : true,
+					xAxis : [ {
+						type : 'value',
+						boundaryGap : [ 0, 0.01 ]
+					} ],
+					yAxis : [ {
+						type : 'category',
+						data : [ '裤子女', '秋裤', '保暖内衣', '棉袜', '打底衫女', '外套男装',
+								'休闲裤男', '男鞋', '饼干', 'iphone', '男士袜子', '毛衣女',
+								'抽纸', '针织衫女', '牛仔裤男', '棉衣男', '针织衫男', '手套',
+								'珊瑚绒睡衣', '清洁剂', '板鞋', '靴子' ].reverse()
+					} ],
+
+					series : [ {
+						name : '2017年12月',
+						type : 'bar',
+						data : [ 17876900, 12177040, 11318300, 9809210.0,
+								8715402.0, 8641977.0, 8609225.0, 8176627.0,
+								7864698.0, 7321395.0, 6933028.0, 6290753.0,
+								6096333.0, 5841158.0, 5824355.0, 5569577.0,
+								5441920.0, 5284268.0, 5129904.0, 4862618.0,
+								4853351.0, 4763410.0 ].reverse(),
+						itemStyle : {
+							normal : { //柱状图颜色
+								color : '#b6a2df',
+								label : {
+									show : true, //显示文本
+									position : 'right', //数据值位置
+									textStyle : {
+										color : '#0000FF',
+										fontSize : '15',
+									}
+								}
+							}
+						}
+					}
+
+					]
+
+				};
+
+				// 为echarts对象加载数据
+				myChart.setOption(option);
+				myChart2.setOption(option);
+			});
+</script>
+
+
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div class="total2" style="height: 650px;margin-top:20px"></div>
+<!-- ECharts单文件引入
+<script src="http://echarts.baidu.com/build/dist/echarts.js"></script>-->
+
+<script type="text/javascript">
+	// 路径配置
+	require.config({
+		paths : {
+			echarts : 'http://echarts.baidu.com/build/dist'
+		}
+	});
+
+	// 使用
+	require([ 'echarts', 'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+	], function(ec) {
+		// 基于准备好的dom，初始化echarts图表
+		var myChart = ec.init(document.getElementsByClassName('total2')[0]);
+		var myChart2 = ec.init(document.getElementsByClassName('total2')[1]);
+
+		var option = {
+
+			title : {
+				text : '图2',
+			},
+			tooltip : {
+				trigger : 'axis',
+				axisPointer : { // 坐标轴指示器，坐标轴触发有效
+					type : 'line' // 默认为直线，可选为：'line' | 'shadow'
+				}
+			},
+			legend : {
+				data : [ '2017年12月' ]
+			},
+			toolbox : {
+				show : true,
+				feature : {
+					//mark : {show: true},
+					//dataView : {show: true, readOnly: true},
+					//magicType: {show: true, type: ['line', 'bar']},
+					restore : {
+						show : true
+					},
+					saveAsImage : {
+						show : true
+					}
+				}
+			},
+			//calculable : true,
+			xAxis : [ {
+				type : 'value',
+				boundaryGap : [ 0, 0.01 ]
+			} ],
+			yAxis : [ {
+				type : 'category',
+				data : [ '小米', '洁面', '儿童裤子', '棉袜女', '牛肉', '内裤女', '长袖睡衣', '围巾',
+						'内裤男', '巧克力', '运动裤男装', '面膜', '乳液', '柠檬', '帽子', '童鞋',
+						'卫衣男装', '雪地靴', '洗发水', 'oppo', 'T恤男装', '卫生巾', '牛奶',
+						'男士睡衣', '绘本' ].reverse()
+			} ],
+
+			axisLabel : [ {
+				show : true
+			} ],
+			series : [ {
+				name : '2017年12月',
+				type : 'bar',
+				data : [ 4746490.0, 4727331.0, 4694670.0, 4651058.0, 4630011.0,
+						4612125.0, 4508023.0, 4426260.0, 4417667.0, 4368916.0,
+						4332190.0, 4282905.0, 4207855.0, 4167727.0, 4166215.0,
+						3931569.0, 3862480.0, 3851849.0, 3812539.0, 3725865.0,
+						3696852.0, 3568475.0, 3537466.0, 3532434.0, 3492248.0 ]
+						.reverse(),
+				itemStyle : {
+					normal : { //柱状图颜色
+						color : '#b6a2df',//#2ec7c9',
+						label : {
+							show : true, //显示文本
+							position : 'right', //数据值位置
+							textStyle : {
+								color : '#0000FF',
+								fontSize : '15',
+
+							}
+						}
+					}
+				}
+
+			}
+
+			]
+
+		};
+
+		// 为echarts对象加载数据
+		myChart.setOption(option);
+		myChart2.setOption(option);
+	});
+</script>
+
+<p><span style="font-size:1.4em;margin:1.4em 0"> / 2 /</span> <code>女装</code>在整个销量中占比最高，我们对女装数据进一步分析，<code>销量</code>和<code>均价</code>展示如下：</p>
+
+
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div class="nvzhuang-bar" style="height:700px;margin-top:20px"></div>
+    <!-- ECharts单文件引入 -->
+
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: 'http://echarts.baidu.com/build/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementsByClassName('nvzhuang-bar')[0]);
+                var myChart2 = ec.init(document.getElementsByClassName('nvzhuang-bar')[1]);
+
+                var option = {
+
+                	    title : {
+                	        text: '女装',
+                	    },
+                	    tooltip : {
+                	        trigger: 'axis',
+                	        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                	            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                	        }
+                	    },
+                	    legend: {
+                	        data:['2017年12月销量','平均价格']
+                	    },
+                	    toolbox: {
+                	        show : true,
+                	        feature : {
+                	            //mark : {show: true},
+                	            //dataView : {show: true, readOnly: true},
+                	            //magicType: {show: true, type: ['line', 'bar']},
+                	            restore : {show: true},
+                	            saveAsImage : {show: true}
+                	        }
+                	    },
+                	    //calculable : true,
+                	    xAxis : [
+                	        {
+                	            type : 'value',
+                	            boundaryGap : [0, 0.01]
+                	        }
+                	    ],
+                	    yAxis : [
+                	        {
+                	            type : 'category',
+                	            data : [  	'裤子女',
+                	                      	'打底衫女',
+                	                      	 '毛衣女',
+                	                      	'针织衫女',
+                	                      	 '棉服女',
+                	                      	'羽绒服女',
+                	                      	'卫衣女装',
+                	                      	'T恤女装',
+                	                      	 '妈妈装',
+                	                      	 '半身裙',
+                	                      	'毛呢外套女',
+                	                      	'衬衫女装',
+                	                      	 '连衣裙',
+                	                      	 '夹克女',
+                	                      	'风衣女装',
+                	                      	 '皮衣女',
+                	                      	'婚纱礼服',
+                	                      	 '西装女'
+										].reverse()
+                	        }
+                	    ],
+
+                	    axisLabel:[
+              	               {show:true}
+            	               ],
+                	    series : [
+                	        {
+                	            name:'2017年12月销量',
+                	            type:'bar',
+                	            data:[17876922,
+                	                  8715402.0,
+                	                  6290753.0,
+                	                   5841158.0,
+                	                  3196945.0,
+                	                   2939183.0,
+                	                   2577558.0,
+                	                  2408077.0,
+                	                  1863748.0,
+                	                  1431816.0,
+                	                  1106528.0,
+                	                   1044920.0,
+                	                   912888.0,
+                	                   280154.0,
+                	                    184813.0,
+                	                   179334.0,
+                	                    143646.0,
+                	                   137403.0
+
+								].reverse(),
+								itemStyle:{
+				                    normal:{    //柱状图颜色
+				                        color:'#e675bd',//#2ec7c9',
+				                        label:{
+				                            show: true,   //显示文本
+				                            position: 'right',  //数据值位置
+				                            textStyle:{
+				                                color:'#0000FF',
+				                                fontSize:'15',
+
+				                            }
+				                        }
+				                    }
+				                }
+
+                	        },
+                	        {
+                	            name:'平均价格',
+                	            type:'bar',
+                	            data:[63.66,
+                	                  70.79,
+                	                  93.32,
+                	                  96.70,
+                	                  184.65,
+                	                  385.8,
+                	                  77.80,
+                	                  60.12,
+                	                  184.95,
+                	                  103.11,
+                	                  368.93,
+                	                  104.84,
+                	                  188.32,
+                	                  239.14,
+                	                  315.47,
+                	                  857.67,
+                	                  463.88,
+                	                  393.21
+
+								].reverse(),
+								itemStyle:{
+				                    normal:{    //柱状图颜色
+				                        color:'#2ec7c9',//#2ec7c9',
+				                        label:{
+				                            show: true,   //显示文本
+				                            position: 'right',  //数据值位置
+				                            textStyle:{
+				                                color:'#0000ff',
+				                                fontSize:'15',
+
+				                            }
+				                        }
+				                    }
+				                }
+
+                	        }
+                	    ]
+                	};
+
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+                myChart2.setOption(option);
+            }
+        );
+    </script>
+
+ 
+
+
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div class="nvzhuang-pie" style="height: 450px;margin-top:20px"></div>
+<!-- ECharts单文件引入 -->
+
+<script type="text/javascript">
+	// 路径配置
+	require.config({
+		paths : {
+			echarts : 'http://echarts.baidu.com/build/dist'
+		}
+	});
+
+	// 使用
+	require([ 'echarts', 'echarts/chart/pie' // 使用柱状图就加载bar模块，按需加载
+	], function(ec) {
+		// 基于准备好的dom，初始化echarts图表
+		var myChart = ec.init(document.getElementsByClassName('nvzhuang-pie')[0]);
+		var myChart2 = ec.init(document.getElementsByClassName('nvzhuang-pie')[1]);
+
+		var option = {
+			title : {
+				text : '女装销售比例',
+
+			},
+			tooltip : {
+				trigger : 'item',
+				formatter : "{a} <br/>{b} : {c} ({d}%)"
+			},
+
+			toolbox : {
+				show : true,
+				feature : {
+					restore : {
+						show : true
+					},
+					saveAsImage : {
+						show : true
+					}
+				}
+			},
+			calculable : true,
+			series : [ {
+				name : '女装销售比例',
+				type : 'pie',
+				radius : '55%',
+				center : [ '50%', '60%' ],
+				data : [ {
+					value : 17876922,
+					name : '裤子女装'
+				}, {
+					value : 8715402,
+					name : '打底衫女'
+				}, {
+					value : 6290753,
+					name : '毛衣女'
+				}, {
+					value : 5841158,
+					name : '针织衫女'
+				}, {
+					value : 3196945,
+					name : '棉服女'
+				}, {
+					value : 2939183,
+					name : '羽绒服女'
+				}, {
+					value : 2577558,
+					name : '卫衣女装'
+				}, {
+					value : 2408077,
+					name : 'T恤女装'
+				}, {
+					value : 1863748,
+					name : '妈妈装'
+				}, {
+					value : 1431816.0,
+					name : '半身裙'
+				}, {
+					value : 1106528.0,
+					name : '毛呢外套女'
+				}, {
+					value : 1044920.0,
+					name : '衬衫女装'
+				}, {
+					value : 912888.0,
+					name : '连衣裙'
+				}, {
+					value : 280154.0,
+					name : '夹克女'
+				}, {
+					value : 184813.0,
+					name : '风衣女装'
+				}, {
+					value : 179334.0,
+					name : '皮衣女'
+				}, {
+					value : 143646.0,
+					name : '婚纱礼服'
+				}, {
+					value : 137403.0,
+					name : '西装女'
+				}
+
+				]
+			} ]
+		};
+
+		// 为echarts对象加载数据
+		myChart.setOption(option);
+		myChart2.setOption(option);
+	});
+</script>
+
+
+<p><span style="font-size:1.4em;margin:1.4em 0"> / 3 /</span>  <code>手机</code>销量如下所示：<br>
+
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div class="phone1" style="height:320px;margin-top:20px"></div>
+    <!-- ECharts单文件引入 -->
+
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: 'http://echarts.baidu.com/build/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementsByClassName('phone1')[0]);
+                var myChart2 = ec.init(document.getElementsByClassName('phone1')[1]);
+
+                var option = {
+
+                	    title : {
+                	        text: '手机销量',
+                	    },
+                	    tooltip : {
+                	        trigger: 'axis',
+                	        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                	            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                	        }
+                	    },
+                	    legend: {
+                	        data:['2017年12月手机销量']
+                	    },
+                	    toolbox: {
+                	        show : true,
+                	        feature : {
+                	            //mark : {show: true},
+                	            //dataView : {show: true, readOnly: true},
+                	            //magicType: {show: true, type: ['line', 'bar']},
+                	            restore : {show: true},
+                	            saveAsImage : {show: true}
+                	        }
+                	    },
+                	    //calculable : true,
+                	    xAxis : [
+                	        {
+                	            type : 'value',
+                	            boundaryGap : [0, 0.01]
+                	        }
+                	    ],
+                	    yAxis : [
+                	        {
+                	            type : 'category',
+                	            data : [  	'iphone',
+                	                      	'小米',
+                	                      	'oppo',
+                	                      	'荣耀',
+                	                      	'华为',
+                	                      	'魅族',
+                	                      	'vivo',
+                	                      	'三星'
+
+										].reverse()
+                	        }
+                	    ],
+
+                	    axisLabel:[
+              	               {show:true}
+            	               ],
+                	    series : [
+                	        {
+                	            name:'2017年12月手机销量',
+                	            type:'bar',
+                	            data:[7321395.0,
+                	                  4746490.0,
+                	                  3725865.0,
+                	                  455962.0,
+                	                  350468.0,
+                	                  144537.0,
+                	                  133113.0,
+                	                  112196.0,
+								].reverse(),
+								itemStyle:{
+				                    normal:{    //柱状图颜色
+				                        color:'#b6a2df',//#2ec7c9',
+				                        label:{
+				                            show: true,   //显示文本
+				                            position: 'right',  //数据值位置
+				                            textStyle:{
+				                                color:'#0000FF',
+				                                fontSize:'18',
+
+				                            }
+				                        }
+				                    }
+				                }
+
+                	        }
+
+                	    ]
+
+                	};
+
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+                myChart2.setOption(option);
+            }
+        );
+    </script>
+
+<br>
+
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div class="phone-pie" style="height:450px;margin-top:20px"></div>
+    <!-- ECharts单文件引入 -->
+
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: 'http://echarts.baidu.com/build/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/pie' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementsByClassName('phone-pie')[0]);
+                var myChart2 = ec.init(document.getElementsByClassName('phone-pie')[1]);
+
+                var option = {
+                	    title : {
+                	        text: '手机销量比例',
+
+
+                	    },
+                	    tooltip : {
+                	        trigger: 'item',
+                	        formatter: "{a} <br/>{b} : {c} ({d}%)"
+                	    },
+
+                	    toolbox: {
+                	        show : true,
+                	        feature : {
+                	            restore : {show: true},
+                	            saveAsImage : {show: true}
+                	        }
+                	    },
+                	    calculable : true,
+                	    series : [
+                	        {
+                	            name:'手机销量',
+                	            type:'pie',
+                	            radius : '55%',
+                	            center: ['50%', '60%'],
+                	            data:[
+									{value:7321395.0, name:'iphone'},
+									{value:4746490.0, name:'小米'},
+									{value:3725865.0,  name:'oppo'},
+									{value:455962.0, name:'荣耀'},
+									{value:350468.0,  name:'华为'},
+									{value:144537.0, name:'魅族'},
+									{value:133113.0, name:'vivo'},
+                	                {value:112196.0,  name:'三星'}
+
+                	              ]
+                	        }
+                	    ]
+                	};
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+                myChart2.setOption(option);
+            }
+        );
+    </script>
+
+</p>
+<p><span style="font-size:1.4em;margin:1.4em 0"> / 4 /</span>  <code>零食</code> <code>销量</code>及<code>平均价格</code>如下所示：</p>
+
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div class="lingshi-bar" style="height: 650px;margin-top:20px"></div>
+<!-- ECharts单文件引入 -->
+
+<script type="text/javascript">
+	// 路径配置
+	require.config({
+		paths : {
+			echarts : 'http://echarts.baidu.com/build/dist'
+		}
+	});
+
+	// 使用
+	require([ 'echarts', 'echarts/chart/bar' // 使用柱状图就加载bar模块，按需加载
+	], function(ec) {
+		// 基于准备好的dom，初始化echarts图表
+		var myChart = ec.init(document.getElementsByClassName('lingshi-bar')[0]);
+		var myChart2 = ec.init(document.getElementsByClassName('lingshi-bar')[1]);
+
+		var option = {
+
+			title : {
+				text : '零食',
+			},
+			tooltip : {
+				trigger : 'axis',
+				axisPointer : { // 坐标轴指示器，坐标轴触发有效
+					type : 'shadow' // 默认为直线，可选为：'line' | 'shadow'
+				}
+			},
+			legend : {
+				data : [ '2017年12月零食销量', '平均价格' ]
+			},
+			toolbox : {
+				show : true,
+				feature : {
+					//mark : {show: true},
+					//dataView : {show: true, readOnly: true},
+					//magicType: {show: true, type: ['line', 'bar']},
+					restore : {
+						show : true
+					},
+					saveAsImage : {
+						show : true
+					}
+				}
+			},
+			//calculable : true,
+			xAxis : [ {
+				type : 'value',
+				boundaryGap : [ 0, 0.01 ]
+			} ],
+			yAxis : [ {
+				type : 'category',
+				data : [ '饼干', '巧克力', '辣条', '牛肉干', '鸭肉', '夏威夷果', '碧根果', '芒果干',
+						'巴旦木', '开心果', '葡萄干', '棒棒糖', '牛奶糖', '薄荷糖', '果冻', '话梅糖',
+						'甜甜圈', '蓝莓干', '椰蓉球', '泡泡糖'
+
+				].reverse()
+			} ],
+
+			axisLabel : [ {
+				show : true
+			} ],
+			series : [
+					{
+						name : '2017年12月零食销量',
+						type : 'bar',
+						data : [ 7864698.0, 4368916.0, 3260309.0, 2424924.0,
+								2385978.0, 2290653.0, 1589494.0, 1520751.0,
+								1347743.0, 1293426.0, 1259383.0, 917969.0,
+								820685.0, 549718.0, 538237.0, 353385.0,
+								231681.0, 177681.0, 83488.0, 24702.0
+
+						].reverse(),
+						itemStyle : {
+							normal : { //柱状图颜色
+								color : '#b6a2df',//#2ec7c9',
+								label : {
+									show : true, //显示文本
+									position : 'right', //数据值位置
+									textStyle : {
+										color : '#0000FF',
+										fontSize : '15',
+
+									}
+								}
+							}
+						}
+
+					},
+					{
+						name : '平均价格',
+						type : 'bar',
+						data : [ 27.93, 45.04, 18.55, 49.16, 38.66, 48.82,
+								46.83, 32.17, 38.24, 54.97, 26.95, 31.47,
+								26.72, 34.90, 26.79, 26.47, 56.67, 161.87,
+								33.80, 409.11
+
+						].reverse(),
+						itemStyle : {
+							normal : { //柱状图颜色
+								color : '#87cefa',//#2ec7c9',
+								label : {
+									show : true, //显示文本
+									position : 'right', //数据值位置
+									textStyle : {
+										color : '#0000FF',
+										fontSize : '15',
+
+									}
+								}
+							}
+						}
+
+					}
+
+			]
+
+		};
+
+		// 为echarts对象加载数据
+		myChart.setOption(option);
+		myChart2.setOption(option);
+	});
+</script>
+
+
+<h1 id="4-小结"><a href="#4-小结" class="headerlink" title="4 小结"></a>4 小结</h1><p>本文较为浅显的讲解了数据抓取–分析–展示的全过程。值的说明的是，由于数据非实时数据，可能有数据偏移；<br>spark的分析部分较为基础，更复杂的分析，后续会更新。欢迎对github文档的补充与代码的完善，欢迎指导。<br>附本次代码，详细说明见对应文档。</p>
+<ol>
+<li><p>数据爬虫见 <a href="https://github.com/whbing/taobaospider" target="_blank" rel="noopener">taobaospider</a></p>
+</li>
+<li><p>spark分析代码及Echart展示见 <a href="https://github.com/whbing/TmallAnalysisWithSpark" target="_blank" rel="noopener">TmallAnalysis WithSpark</a></p>
+</li>
+</ol>
+
+  </section>
+
+  <section class="post-comments">
+
+    <!-- 将评论系统（例如Disqus、多说、友言、畅言等）提供的代码片段粘贴在这里 -->
+    
+</section>
+
+  <!--<link rel="stylesheet"-->
+        <!--href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">-->
+  <!--<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>-->
+</article>
+
+
+                <footer class="footer">
+
+    <span class="footer__copyright">&copy; 2017-2018. | 由<a href="https://hexo.io/">Hexo</a>强力驱动 | 主题<a href="https://github.com/whbing/lovetter">Lovetter</a></span>
+    
+</footer>
+            </div>
+        </div>
+    </div>
+    <!-- 这里的页面单独提出来了-->
+    <!--myadd-->
+    <link rel="stylesheet" href="/css/highlight.min.css ">
+    <!--<link rel="stylesheet" href="//cdn.bootcss.com/highlight.js/9.2.0/styles/atelier-lakeside-light.min.css">-->
+    <!--<link rel="stylesheet" href="//cdn.bootcss.com/highlight.js/9.2.0/styles/solarized-light.min.css">-->
+    <!--<script src="//cdn.bootcss.com/highlight.js/9.2.0/highlight.min.js"></script>-->
+
+    <script src="/js/wow.min.js"></script>
+    <script src="/js/highlight.min.js"></script>
+
+    <!--<script src="/js/bootstrap.min.js"></script>-->
+    <script src="/js/addfun.js"></script><!--init the wowJS-->
+
+
+    <script>
+        $("#m-header").animate({'height':'32px'},1000,"swing");
+        $(".intrude-less").animate({'opacity':'0'},100);
+        $(".overlay").animate({'height':'32px'},1000,"swing");
+    </script>
+
+</body>
+</html>
